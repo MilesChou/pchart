@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MilesChou\Template;
+namespace Phart;
 
-class Sample
+class Phart
 {
     public function alwaysTrue(): bool
     {

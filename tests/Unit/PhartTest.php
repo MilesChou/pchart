@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use MilesChou\Template\Sample;
+use Phart\Phart;
 use Tests\TestCase;
 
-class SampleTest extends TestCase
+class PhartTest extends TestCase
 {
     /**
      * @test
      */
     public function sample(): void
     {
-        $this->assertTrue((new Sample())->alwaysTrue());
+        $this->assertTrue((new Phart())->alwaysTrue());
     }
 }
