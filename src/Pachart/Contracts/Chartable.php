@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phart\Contracts;
+namespace Pachart\Contracts;
 
 interface Chartable
 {

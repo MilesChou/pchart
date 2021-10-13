@@ -1,8 +1,8 @@
 <?php
 
-namespace Phart\Drivers\GoogleChartApi;
+namespace Pachart\Drivers\GoogleChartApi;
 
-use Phart\Contracts\Chartable;
+use Pachart\Contracts\Chartable;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 
@@ -12,6 +12,11 @@ class Line implements Chartable
      * @var ClientInterface
      */
     private $client;
+
+    /**
+     * @var array
+     */
+    private $data;
 
     /**
      * @var RequestFactoryInterface
@@ -26,12 +31,16 @@ class Line implements Chartable
     /**
      * @var int
      */
-    private $upper = 100;
+    private $upper;
 
     /**
      * @var int
      */
-    private $lower = 0;
+    private $lower;
+    /**
+     * @var int
+     */
+    private $paddingPercent = 0;
 
     public function __construct(ClientInterface $client, RequestFactoryInterface $uriFactory)
     {
@@ -55,7 +64,12 @@ class Line implements Chartable
         $this->upper = $upper;
         $this->lower = $lower;
 
-        $this->parameter['chxr'] = '1,550,600';
+        return $this;
+    }
+
+    public function rangePaddingPercent(int $percent): self
+    {
+        $this->paddingPercent = $percent;
 
         return $this;
     }
@@ -69,11 +83,7 @@ class Line implements Chartable
 
     public function setData(array $data): self
     {
-        $data = array_map(function ($v) {
-            return 100 * (($v - $this->lower) / ($this->upper - $this->lower));
-        }, $data);
-
-        $this->parameter['chd'] = 't:' . implode(',', $data);
+        $this->data = $data;
 
         return $this;
     }
@@ -94,6 +104,20 @@ class Line implements Chartable
 
     public function buildUri(): string
     {
+        $lower = $this->lower ?? min($this->data);
+        $upper = $this->upper ?? max($this->data);
+
+        $diff = $upper - $lower;
+        $lower -= ($diff * $this->paddingPercent / 100);
+        $upper += ($diff * $this->paddingPercent / 100);
+
+        $data = array_map(function ($v) use ($lower, $upper) {
+            return 100 * (($v - $lower) / ($upper - $lower));
+        }, $this->data);
+
+        $this->parameter['chd'] = 't:' . implode(',', $data);
+        $this->parameter['chxr'] = "1,{$lower},{$upper}";
+
         return 'https://chart.googleapis.com/chart?' . http_build_query($this->parameter, '', '&', PHP_QUERY_RFC3986);
     }
 

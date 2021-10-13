@@ -1,5 +1,5 @@
 {
-    "name": "phart/phart",
+    "name": "pastock/pachart",
     "description": "The chart library for PHP",
     "type": "library",
     "license": "MIT",
@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Phart\\": "src/Phart"
+            "Pachart\\": "src/Pachart"
         }
     },
     "autoload-dev": {
