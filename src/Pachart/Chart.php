@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pachart\Contracts;
+namespace Pachart;
 
-interface Chartable
+interface Chart
 {
     /**
      * Return the binary content
      *
      * @return string
      */
-    public function content(): string;
+    public function binary(): string;
 }

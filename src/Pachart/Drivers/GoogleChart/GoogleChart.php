@@ -1,22 +1,20 @@
 <?php
 
-namespace Pachart\Drivers\GoogleChartApi;
+namespace Pachart\Drivers\GoogleChart;
 
-use Pachart\Contracts\Chartable;
+use Pachart\Chart;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 
-class Line implements Chartable
+/**
+ * @see https://developers.google.com/chart/image/docs/making_charts
+ */
+abstract class GoogleChart implements Chart
 {
     /**
      * @var ClientInterface
      */
     private $client;
-
-    /**
-     * @var array
-     */
-    private $data;
 
     /**
      * @var RequestFactoryInterface
@@ -26,7 +24,7 @@ class Line implements Chartable
     /**
      * @var array
      */
-    private $parameter;
+    private $data;
 
     /**
      * @var int
@@ -37,19 +35,22 @@ class Line implements Chartable
      * @var int
      */
     private $lower;
+
     /**
      * @var int
      */
     private $paddingPercent = 0;
 
+    /**
+     * @var array
+     */
+    private $parameter;
+
     public function __construct(ClientInterface $client, RequestFactoryInterface $uriFactory)
     {
         $this->client = $client;
         $this->uriFactory = $uriFactory;
-
-        $this->parameter = [
-            'cht' => 'lc',
-        ];
+        $this->parameter = $this->initParameter();
     }
 
     public function size(int $x, int $y): self
@@ -112,7 +113,7 @@ class Line implements Chartable
         $upper += ($diff * $this->paddingPercent / 100);
 
         $data = array_map(function ($v) use ($lower, $upper) {
-            return 100 * (($v - $lower) / ($upper - $lower));
+            return sprintf('%.1f', 100 * (($v - $lower) / ($upper - $lower)));
         }, $this->data);
 
         $this->parameter['chd'] = 't:' . implode(',', $data);
@@ -121,7 +122,7 @@ class Line implements Chartable
         return 'https://chart.googleapis.com/chart?' . http_build_query($this->parameter, '', '&', PHP_QUERY_RFC3986);
     }
 
-    public function content(): string
+    public function binary(): string
     {
         $response = $this->client->sendRequest(
             $this->uriFactory->createRequest('GET', $this->buildUri())
@@ -129,4 +130,6 @@ class Line implements Chartable
 
         return (string)$response->getBody();
     }
+
+    abstract public function initParameter(): array;
 }
