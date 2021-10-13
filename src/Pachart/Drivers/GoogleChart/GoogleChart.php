@@ -3,6 +3,7 @@
 namespace Pachart\Drivers\GoogleChart;
 
 use Pachart\Chart;
+use Pachart\Utils;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 
@@ -19,10 +20,10 @@ abstract class GoogleChart implements Chart
     /**
      * @var RequestFactoryInterface
      */
-    private $uriFactory;
+    private $requestFactory;
 
     /**
-     * @var array
+     * @var iterable
      */
     private $data;
 
@@ -46,10 +47,10 @@ abstract class GoogleChart implements Chart
      */
     private $parameter;
 
-    public function __construct(ClientInterface $client, RequestFactoryInterface $uriFactory)
+    public function __construct(ClientInterface $client, RequestFactoryInterface $requestFactory)
     {
         $this->client = $client;
-        $this->uriFactory = $uriFactory;
+        $this->requestFactory = $requestFactory;
         $this->parameter = $this->initParameter();
     }
 
@@ -82,21 +83,23 @@ abstract class GoogleChart implements Chart
         return $this;
     }
 
-    public function setData(array $data): self
+    public function setData(iterable $data): self
     {
         $this->data = $data;
 
         return $this;
     }
 
-    public function setXLabel(array $data): self
+    public function setXLabel(iterable $labels): self
     {
-        $this->parameter['chxl'] = '0:|' . implode('|', $data);
+        $labels = Utils::iterateToArray($labels);
+
+        $this->parameter['chxl'] = '0:|' . implode('|', $labels);
 
         return $this;
     }
 
-    public function setGrid($x, $y): self
+    public function setGrid(int $x, int $y): self
     {
         $this->parameter['chg'] = "$x,$y";
 
@@ -114,7 +117,7 @@ abstract class GoogleChart implements Chart
 
         $data = array_map(function ($v) use ($lower, $upper) {
             return sprintf('%.1f', 100 * (($v - $lower) / ($upper - $lower)));
-        }, $this->data);
+        }, Utils::iterateToArray($this->data));
 
         $this->parameter['chd'] = 't:' . implode(',', $data);
         $this->parameter['chxr'] = "1,{$lower},{$upper}";
@@ -125,7 +128,7 @@ abstract class GoogleChart implements Chart
     public function binary(): string
     {
         $response = $this->client->sendRequest(
-            $this->uriFactory->createRequest('GET', $this->buildUri())
+            $this->requestFactory->createRequest('GET', $this->buildUri())
         );
 
         return (string)$response->getBody();

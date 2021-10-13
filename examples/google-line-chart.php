@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $httpFactory = new MilesChou\Psr\Http\Message\HttpFactory();
-$httpClient = new Symfony\Component\HttpClient\Psr18Client(null, $httpFactory, $httpFactory);
+$httpClient = new GuzzleHttp\Client();
 
 $target = new Pachart\Drivers\GoogleChart\Line($httpClient, $httpFactory);
 
