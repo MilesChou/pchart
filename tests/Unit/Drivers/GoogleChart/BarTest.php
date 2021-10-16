@@ -19,7 +19,7 @@ class BarTest extends TestCase
     {
         $target = new Bar(new MockClient(), new RequestFactory());
 
-        $target->setData($iterable);
+        $target->appendData($iterable);
 
         $this->expectNotToPerformAssertions();
     }

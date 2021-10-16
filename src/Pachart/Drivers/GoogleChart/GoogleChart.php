@@ -23,9 +23,9 @@ abstract class GoogleChart implements Chart
     private $requestFactory;
 
     /**
-     * @var iterable
+     * @var iterable[]
      */
-    private $data;
+    private $data = [];
 
     /**
      * @var int
@@ -83,9 +83,9 @@ abstract class GoogleChart implements Chart
         return $this;
     }
 
-    public function setData(iterable $data): self
+    public function appendData(iterable $data): self
     {
-        $this->data = $data;
+        $this->data[] = $data;
 
         return $this;
     }
@@ -108,19 +108,26 @@ abstract class GoogleChart implements Chart
 
     public function buildUri(): string
     {
-        $lower = $this->lower ?? min($this->data);
-        $upper = $this->upper ?? max($this->data);
+        $lower = $this->lower ?? min($this->collapseData());
+        $upper = $this->upper ?? max($this->collapseData());
 
         $diff = $upper - $lower;
         $lower -= ($diff * $this->paddingPercent / 100);
         $upper += ($diff * $this->paddingPercent / 100);
 
         $data = array_map(function ($v) use ($lower, $upper) {
-            return sprintf('%.1f', 100 * (($v - $lower) / ($upper - $lower)));
+            return array_map(function ($v) use ($lower, $upper) {
+                return sprintf('%.1f', 100 * (($v - $lower) / ($upper - $lower)));
+            }, Utils::iterateToArray($v));
         }, Utils::iterateToArray($this->data));
 
-        $this->parameter['chd'] = 't:' . implode(',', $data);
+        $t = implode('|', array_map(function ($v) {
+            return implode(',', $v);
+        }, $data));
+
+        $this->parameter['chd'] = 't:' . $t;
         $this->parameter['chxr'] = "1,{$lower},{$upper}";
+        $this->parameter['chco'] = '16AF15,0000DC';
 
         return 'https://chart.googleapis.com/chart?' . http_build_query($this->parameter, '', '&', PHP_QUERY_RFC3986);
     }
@@ -135,4 +142,11 @@ abstract class GoogleChart implements Chart
     }
 
     abstract public function initParameter(): array;
+
+    private function collapseData(): array
+    {
+        return array_reduce($this->data, function ($c, $v) {
+            return array_merge($c, $v);
+        }, []);
+    }
 }
