@@ -1,6 +1,8 @@
 <?php
 
-namespace Pachart;
+declare(strict_types=1);
+
+namespace Pastock\Pachart;
 
 use Traversable;
 

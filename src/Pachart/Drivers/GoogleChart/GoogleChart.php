@@ -1,9 +1,12 @@
 <?php
 
-namespace Pachart\Drivers\GoogleChart;
+declare(strict_types=1);
 
-use Pachart\Chart;
-use Pachart\Utils;
+namespace Pastock\Pachart\Drivers\GoogleChart;
+
+use Pastock\Pachart\Chart;
+use Pastock\Pachart\Concerns\HasData;
+use Pastock\Pachart\Utils;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 
@@ -12,6 +15,8 @@ use Psr\Http\Message\RequestFactoryInterface;
  */
 abstract class GoogleChart implements Chart
 {
+    use HasData;
+
     /**
      * @var ClientInterface
      */
@@ -21,26 +26,6 @@ abstract class GoogleChart implements Chart
      * @var RequestFactoryInterface
      */
     private $requestFactory;
-
-    /**
-     * @var iterable[]
-     */
-    private $data = [];
-
-    /**
-     * @var int
-     */
-    private $upper;
-
-    /**
-     * @var int
-     */
-    private $lower;
-
-    /**
-     * @var int
-     */
-    private $paddingPercent = 0;
 
     /**
      * @var array
@@ -61,40 +46,9 @@ abstract class GoogleChart implements Chart
         return $this;
     }
 
-    public function range(int $upper, int $lower): self
-    {
-        $this->upper = $upper;
-        $this->lower = $lower;
-
-        return $this;
-    }
-
-    public function rangePaddingPercent(int $percent): self
-    {
-        $this->paddingPercent = $percent;
-
-        return $this;
-    }
-
     public function setXt(): self
     {
         $this->parameter['chxt'] = 'x,y';
-
-        return $this;
-    }
-
-    public function appendData(iterable $data): self
-    {
-        $this->data[] = $data;
-
-        return $this;
-    }
-
-    public function setXLabel(iterable $labels): self
-    {
-        $labels = Utils::iterateToArray($labels);
-
-        $this->parameter['chxl'] = '0:|' . implode('|', $labels);
 
         return $this;
     }
@@ -108,12 +62,12 @@ abstract class GoogleChart implements Chart
 
     public function buildUri(): string
     {
-        $lower = $this->lower ?? min($this->collapseData());
-        $upper = $this->upper ?? max($this->collapseData());
+        $lower = $this->lower();
+        $upper = $this->upper();
 
         $diff = $upper - $lower;
-        $lower -= ($diff * $this->paddingPercent / 100);
-        $upper += ($diff * $this->paddingPercent / 100);
+        $lower -= ($diff * $this->padding / 100);
+        $upper += ($diff * $this->padding / 100);
 
         $data = array_map(function ($v) use ($lower, $upper) {
             return array_map(function ($v) use ($lower, $upper) {
@@ -125,11 +79,14 @@ abstract class GoogleChart implements Chart
             return implode(',', $v);
         }, $data));
 
-        $this->parameter['chd'] = 't:' . $t;
-        $this->parameter['chxr'] = "1,{$lower},{$upper}";
-        $this->parameter['chco'] = '16AF15,0000DC';
+        $parameter = array_merge([
+            'chd' => 't:' . $t,
+            'chxl' => '0:|' . implode('|', $this->label),
+            'chxr' => "1,{$lower},{$upper}",
+            'chco' => $this->color(count($this->data)),
+        ], $this->parameter);
 
-        return 'https://chart.googleapis.com/chart?' . http_build_query($this->parameter, '', '&', PHP_QUERY_RFC3986);
+        return 'https://chart.googleapis.com/chart?' . http_build_query($parameter, '', '&', PHP_QUERY_RFC3986);
     }
 
     public function binary(): string
@@ -143,10 +100,22 @@ abstract class GoogleChart implements Chart
 
     abstract public function initParameter(): array;
 
-    private function collapseData(): array
+    private function color($count): string
     {
-        return array_reduce($this->data, function ($c, $v) {
-            return array_merge($c, $v);
-        }, []);
+        $arr = [];
+        for ($i = 0; $i < $count; $i++) {
+            $arr[] = $this->randomColor();
+        }
+
+        return implode(',', $arr);
+    }
+
+    private function randomColor(): string
+    {
+        $r = random_int(0x22, 0xAA);
+        $g = random_int(0x22, 0xAA);
+        $b = random_int(0x22, 0xAA);
+
+        return strtoupper(dechex($r) . dechex($g) . dechex($b));
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
-namespace Pachart\Drivers\GoogleChart;
+declare(strict_types=1);
+
+namespace Pastock\Pachart\Drivers\GoogleChart;
 
 class Line extends GoogleChart
 {

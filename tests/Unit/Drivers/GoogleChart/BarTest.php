@@ -5,7 +5,7 @@ namespace Tests\Unit\Drivers\GoogleChart;
 use ArrayIterator;
 use Laminas\Diactoros\RequestFactory;
 use MilesChou\Psr\Http\Client\Testing\MockClient;
-use Pachart\Drivers\GoogleChart\Bar;
+use Pastock\Pachart\Drivers\GoogleChart\Bar;
 use PHPUnit\Framework\TestCase;
 
 class BarTest extends TestCase

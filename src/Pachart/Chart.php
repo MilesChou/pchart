@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pachart;
+namespace Pastock\Pachart;
 
 interface Chart
 {
@@ -12,4 +12,10 @@ interface Chart
      * @return string
      */
     public function binary(): string;
+
+    /**
+     * @param iterable $data
+     * @return Chart
+     */
+    public function appendData(iterable $data): Chart;
 }

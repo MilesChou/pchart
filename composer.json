@@ -27,7 +27,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Pachart\\": "src/Pachart"
+            "Pastock\\Pachart\\": "src/Pachart"
         }
     },
     "autoload-dev": {
